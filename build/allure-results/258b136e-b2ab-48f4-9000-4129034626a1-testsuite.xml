@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:test-suite start="1528543806418" stop="1528543809575" version="1.4.24.RC3" xmlns:ns2="urn:model.allure.qatools.yandex.ru">
+    <name>JsonHelperTest</name>
+    <test-cases>
+        <test-case start="1528543806420" stop="1528543809183" status="passed">
+            <name>getNodeTest</name>
+            <steps/>
+            <attachments/>
+            <labels>
+                <label name="host" value="EPBYGOMW0435"/>
+                <label name="thread" value="2520@EPBYGOMW0435.Test worker(12)"/>
+            </labels>
+        </test-case>
+        <test-case start="1528543809193" stop="1528543809208" status="passed">
+            <name>createObjectNodeTest</name>
+            <steps/>
+            <attachments/>
+            <labels>
+                <label name="host" value="EPBYGOMW0435"/>
+                <label name="thread" value="2520@EPBYGOMW0435.Test worker(12)"/>
+            </labels>
+        </test-case>
+        <test-case start="1528543809210" stop="1528543809307" status="passed">
+            <name>putNodeObjectTest</name>
+            <steps/>
+            <attachments/>
+            <labels>
+                <label name="host" value="EPBYGOMW0435"/>
+                <label name="thread" value="2520@EPBYGOMW0435.Test worker(12)"/>
+            </labels>
+        </test-case>
+        <test-case start="1528543809309" stop="1528543809551" status="passed">
+            <name>parseStringTest</name>
+            <steps/>
+            <attachments/>
+            <labels>
+                <label name="host" value="EPBYGOMW0435"/>
+                <label name="thread" value="2520@EPBYGOMW0435.Test worker(12)"/>
+            </labels>
+        </test-case>
+        <test-case start="1528543809554" stop="1528543809574" status="passed">
+            <name>writeAsStringTest</name>
+            <steps/>
+            <attachments/>
+            <labels>
+                <label name="host" value="EPBYGOMW0435"/>
+                <label name="thread" value="2520@EPBYGOMW0435.Test worker(12)"/>
+            </labels>
+        </test-case>
+    </test-cases>
+    <labels>
+        <label name="language" value="JAVA"/>
+    </labels>
+</ns2:test-suite>

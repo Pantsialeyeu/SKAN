@@ -1,0 +1,35 @@
+#!/bin/bash
+
+err_report() {
+    echo "$0: Error on line $1"
+    exit 1
+}
+
+trap 'err_report $LINENO' ERR
+
+echo ================================================
+echo Start $(basename $0) test with arguments: $*
+echo ================================================
+
+cd $(dirname $0)/..; PROJECT_ROOT=$PWD; cd - >/dev/null
+
+RANDOMIZE_PORT=0
+if [ $RANDOMIZE_PORT -eq 1 ]
+then
+  read LOWERPORT UPPERPORT < /proc/sys/net/ipv4/ip_local_port_range
+  while :
+  do
+    PORT="$(shuf -i $LOWERPORT-$UPPERPORT -n 1)"
+    ss -lpn | grep -q ":$PORT " || break
+  done
+  export ANLYT_SERVER_PORT=$PORT
+  echo "Assigned port $PORT for integration tests"
+fi
+
+./gradlew test integrationTest -x check $*
+rc=$?
+if [ $rc -ne 0 ]
+then
+  echo "Error in test stage [$rc]"
+  exit $rc
+fi

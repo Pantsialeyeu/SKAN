@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="BDD Test Suite" verbose="1" parallel="methods" thread-count="10" configfailurepolicy="continue">
+    <test name="TKMI Demo Test" annotations="JDK" preserve-order="true">
+        <classes>
+            <class name="com.tkmi.test.integration.demoTest.TestNGDemoTest"/>
+        </classes>
+    </test>
+</suite>

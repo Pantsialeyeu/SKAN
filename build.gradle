@@ -1,0 +1,268 @@
+buildscript {
+  ext {
+    springBootVersion = '2.0.2.RELEASE'
+    spockVersion = '1.1-groovy-2.4-rc-3'
+    dependencyManagementPluginVersion = '0.6.1.RELEASE'
+  }
+  repositories {
+    mavenCentral()
+    maven {
+        url 'https://repo.spring.io/release/'
+    }
+    maven {
+        url "https://plugins.gradle.org/m2/"
+    }
+	  maven {
+		  url "https://plugins.gradle.org/m2/"
+	  }
+    jcenter()
+  }
+  dependencies {
+    classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
+    classpath "io.spring.gradle:dependency-management-plugin:$dependencyManagementPluginVersion"
+  }
+}
+
+plugins {
+  id "org.springframework.boot" version "2.0.2.RELEASE"
+  id "io.spring.dependency-management" version "1.0.5.RELEASE"
+  id 'checkstyle'
+  id 'findbugs'
+	id 'info.solidsoft.pitest' version "1.3.0"
+  id 'groovy'
+  id 'java'
+  id 'idea'
+  id 'jacoco'
+  id 'maven'
+}
+
+version '1.0-SNAPSHOT'
+description = 'SCAN Project'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+  maven { url 'https://repo.spring.io/release/' }
+  jcenter()
+}
+
+dependencyManagement {
+  imports {
+    mavenBom ("org.springframework.boot:spring-boot-parent:$springBootVersion")
+    mavenBom ("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
+  }
+  dependencies {
+    dependency 'org.codehaus.groovy:groovy-all:2.4.7'
+    dependency "org.spockframework:spock-core:$spockVersion"
+    dependency "org.spockframework:spock-spring:$spockVersion"
+    dependency 'com.google.code.gson:gson:2.4'
+  }
+}
+
+dependencies {
+  compile (
+    'org.springframework.boot:spring-boot-starter-actuator',
+    'org.springframework.boot:spring-boot-starter-hateoas',
+    'org.springframework.boot:spring-boot-starter-aop',
+    "org.springframework.boot:spring-boot-starter-web:$springBootVersion",
+    "org.springframework.boot:spring-boot-starter-undertow:$springBootVersion",
+    'org.springframework.boot:spring-boot-starter-cache',
+    'org.springframework:spring-jdbc:4.2.4.RELEASE',
+    'commons-io:commons-io:2.4',
+    'log4j:log4j:1.2.17',
+    'org.codehaus.groovy:groovy-all:2.4.1',
+    'com.fasterxml.jackson.core:jackson-databind',
+    'com.google.code.gson:gson:2.8.1',
+    'org.apache.commons:commons-lang3:3.7',
+    'org.apache.commons:commons-collections4:4.1',
+    'io.searchbox:jest:2.0.3',
+    'net.thisptr:jackson-jq:0.0.5'
+  )
+  testCompile(
+    'org.springframework.boot:spring-boot-starter-test',
+    'junit:junit:4.12',
+    "org.spockframework:spock-core:$spockVersion",
+    "org.spockframework:spock-spring:$spockVersion",
+    'cglib:cglib-nodep:2.2',
+    'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1',
+    'org.codehaus.gpars:gpars:1.2.1',
+    'org.testng:testng:6.11',
+    'com.xlson.groovycsv:groovycsv:1.1',
+    'com.networknt:json-schema-validator:0.1.2',
+    'com.jayway.jsonpath:json-path',
+  )
+	testCompile( 'com.athaydes:spock-reports:1.5.0' ) {
+		transitive = false // this avoids affecting your version of Groovy/Spock
+	}
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '4.6'
+}
+
+configurations {
+  integrationTestCompile.extendsFrom testCompile
+  integrationTestRuntime.extendsFrom testRuntime
+  testCompile.exclude(group: 'ch.qos.logback')
+}
+
+bootRun {
+  sourceSets.main.output.setClassesDir(file("${buildDir}/classes/main"))
+}
+
+sourceSets {
+  integrationTest {
+    groovy {
+      compileClasspath += main.output + test.output
+      runtimeClasspath += main.output + test.output
+      srcDir file('src/integration-test/groovy')
+    }
+	  resources.srcDir file('src/integration-test/resources')
+  }
+  /*
+  This looks far too much like black magic, but without the next two statements the compiler is unable to resolve
+  Groovy classes from Java. Per https://discuss.gradle.org/t/how-to-compile-groovy-sources-mixed-with-java-sources/6859/4
+  it appears that setting main.java.srcDirs = [] causes the compileJava step to be bypassed, and adding "src/main/java"
+  to main.groovy.srcDirs then instructs the compileGroovy step to pick up the Java sources and compile them along with
+  Groovy sources in a single step.
+  */
+
+  main.java.srcDirs = []
+  main.groovy.srcDirs += ["src/main/java"]
+}
+
+jacoco {
+    toolVersion = "0.7.7.201606060606"
+}
+
+jacocoTestReport {
+  reports {
+    xml.enabled false
+    csv.enabled false
+    html.enabled true
+    html.setDestination(file("${buildDir}/reports/coverage"))
+  }
+	
+	if (System.properties['closure'] != 'false') {
+    doFirst {
+      classDirectories = classDirectories.collect { fileTree(it) { exclude '**/*$*_closure*' } }.sum()
+    }
+	}
+  afterEvaluate {
+    classDirectories = files(classDirectories.files.collect {
+        fileTree(dir: it, include: 'com/tkmi/**')
+    })
+  }
+
+  def jacocoTestFiles = []
+  
+  def acceptanceTestCoverageFileLocation = "${buildDir}/jacoco/acceptanceTest.exec"
+  if (file(acceptanceTestCoverageFileLocation).exists()) {
+    jacocoTestFiles << acceptanceTestCoverageFileLocation
+  }
+  
+  def integrationTestCoverageFileLocation = "${buildDir}/jacoco/integrationTest.exec"
+  if (file(integrationTestCoverageFileLocation).exists()) {
+      jacocoTestFiles << integrationTestCoverageFileLocation
+  }
+
+  def unitTestCoverageFileLocation = "${buildDir}/jacoco/test.exec"
+  if (file(unitTestCoverageFileLocation).exists()) {
+      jacocoTestFiles << unitTestCoverageFileLocation
+  }
+
+  def parallelTest = "${buildDir}/jacoco/parallelTest.exec"
+  if (file(parallelTest).exists()) {
+      jacocoTestFiles << parallelTest
+  }
+
+  executionData files(jacocoTestFiles)
+}
+
+tasks.withType(FindBugs) {
+  reports {
+    xml.enabled false
+    html.enabled true
+    //html.stylesheet resources.text.fromFile('config/xsl/findbugs-custom.xsl')
+  }
+  ignoreFailures true
+  excludeFilter file('config/findbugs/exclude.xml')
+}
+
+tasks.withType(Checkstyle) {
+  reports {
+    xml.enabled false
+    html.enabled true
+  }
+  ignoreFailures true
+  // displayViolations false
+  // displayViolations does not with our current version of Gradle.
+  // Need to live with massive console output on builds until we upgrade...
+  // see https://github.com/gradle/gradle/pull/64
+}
+
+tasks.withType(Test) {
+	systemProperty 'com.athaydes.spockframework.report.outputDir', 'build/reports/spock'
+  reports.html.destination = file("${reporting.baseDir}/${name}")
+  reports.junitXml.destination = file("${reporting.baseDir}/${name}/xml")
+//	jacoco.excludes = ['**/*$*_closure*']
+  testLogging {
+    events "passed", "skipped", "failed"
+    exceptionFormat "full" // default is "short"
+  }
+}
+
+tasks.withType(JavaCompile) {
+  options.compilerArgs << '-Xlint:deprecation'
+  options.fork = true
+}
+
+task integrationTest(type: Test) {
+  useTestNG {
+      options.setConfigFailurePolicy("continue")
+      includeGroups = ["nonparallel"]
+  }
+  integrationTest.testClassesDirs = sourceSets.integrationTest.output.classesDirs
+  integrationTest.classpath = sourceSets.integrationTest.runtimeClasspath
+}
+
+task parallelTest(type: Test) {
+  String parallelMode = 'methods'
+  System.properties['runParallel'] == 'false' ? parallelMode = 'false' : parallelMode
+  useTestNG { options ->
+      options.parallel = parallelMode
+      options.setConfigFailurePolicy("continue")
+      options.threadCount = 20
+      excludeGroups = ["nonparallel"]
+  }
+  parallelTest.testClassesDirs = sourceSets.integrationTest.output.classesDirs
+  parallelTest.classpath = sourceSets.integrationTest.runtimeClasspath
+}
+
+integrationTest.finalizedBy parallelTest
+
+jar {
+  baseName = project.name
+  version = project.version
+  exclude '**/log4j.properties'
+  exclude 'doc/**'
+}
+
+clean {
+	delete 'out'
+	delete 'build'
+}
+
+pitest {
+	targetClasses = [
+		'com.tkmi.*'
+	]
+	targetTests = [
+		'com.tkmi.test.unit.*',
+		'com.tkmi.test.integration.*'
+	]
+	outputFormats = ['XML', 'HTML']
+	timestampedReports = false
+}

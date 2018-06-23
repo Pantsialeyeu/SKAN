@@ -1,0 +1,10 @@
+<FindBugsFilter>
+    <Match>
+        <Bug code="EI, EI2" />
+    </Match>
+
+    <Match>
+        <!--<Class name="com.tkmi.Application"/>-->
+        <Bug code="MS, ST" />
+    </Match>
+</FindBugsFilter>

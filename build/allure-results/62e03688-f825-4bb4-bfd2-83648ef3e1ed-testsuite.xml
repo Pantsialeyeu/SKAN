@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:test-suite start="1528543796755" stop="1528543805488" version="1.4.24.RC3" xmlns:ns2="urn:model.allure.qatools.yandex.ru">
+    <name>DemoControllerTest</name>
+    <test-cases>
+        <test-case start="1528543796789" stop="1528543805472" status="broken">
+            <name>paramGreetingShouldReturnTailoredMessage</name>
+            <failure>
+                <message>NullPointerException: Cannot invoke method perform() on null object</message>
+                <stack-trace>java.lang.NullPointerException: Cannot invoke method perform() on null object
+	at com.tkmi.test.unit.MvcService.get(MvcService.groovy:23)
+	at com.tkmi.test.unit.controllers.DemoControllerTest.paramGreetingShouldReturnTailoredMessage(DemoControllerTest.groovy:15)
+</stack-trace>
+            </failure>
+            <steps/>
+            <attachments/>
+            <labels>
+                <label name="host" value="EPBYGOMW0435"/>
+                <label name="thread" value="2520@EPBYGOMW0435.Test worker(12)"/>
+            </labels>
+        </test-case>
+    </test-cases>
+    <labels>
+        <label name="language" value="JAVA"/>
+    </labels>
+</ns2:test-suite>

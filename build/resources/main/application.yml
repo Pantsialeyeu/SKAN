@@ -1,0 +1,67 @@
+server:
+  port: ${SERVER_PORT:10010}
+  undertow:
+    ioThreads: 10
+    workerThreads: 200
+
+logging.level.ROOT: ${LOG_LEVEL:INFO}
+
+spring:
+  main:
+    show-banner: false
+  aop:
+    auto: true
+  http:
+    encoding:
+      enabled: true
+      charset: UTF-8
+      force: true
+  mvc:
+    async:
+      request-timeout: -1
+
+info:
+  build:
+    name: ${spring.application.name}
+    description: Tkmi Engine
+  component: ${info.build.description}
+
+endpoints:
+  enabled: false
+  actuator:
+    enabled: true
+    sensitive: false
+  autoconfig:
+    enabled: true
+    sensitive: false
+  beans:
+    enabled: true
+    sensitive: false
+  configprops:
+    enabled: true
+    sensitive: false
+  docs:
+    enabled: true
+    sensitive: false
+  dump:
+    enabled: true
+    sensitive: false
+  env:
+    enabled: true
+    sensitive: false
+  health:
+    enabled: true
+    sensitive: false
+  info:
+    enabled: true
+    sensitive: false
+  mappings:
+    enabled: true
+    sensitive: false
+  metrics:
+    enabled: true
+    sensitive: false
+  trace:
+    enabled: true
+    sensitive: false
+

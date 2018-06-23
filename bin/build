@@ -1,0 +1,161 @@
+#!/bin/bash
+
+set -o pipefail
+
+err_report() {
+    echo "Error on line $1"
+    exit 1
+}
+
+trap 'err_report $LINENO' ERR
+
+echo ================================================
+echo Start build script with arguments: $*
+echo ================================================
+
+cd $(dirname $0)/..; PROJECT_ROOT=$PWD; cd - >/dev/null
+
+if [ $? != 0 ]
+then
+  echo "No build arguments found"
+  exit 1
+fi
+
+PROXY_HOST=proxy-us.clarabridge.net
+PROXY_PORT=3128
+PUBLISH=0
+JENKINS=0
+JENKINS_NEW=0
+TASKS='build test integrationTest jacocoTestReport check'
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    --publish) PUBLISH=1; echo 'PUBLISH'; shift;;
+    --jenkins) JENKINS=1; echo 'JENKINS'; shift;;
+    --jenkins-new) JENKINS=1; JENKINS_NEW=1; shift;;
+    --add-tasks) TASKS="$TASKS $2"; shift 2;;
+    --tasks) TASKS="$2"; shift 2;;
+    *) echo "Option $1 is invalid"; exit 1;;
+  esac
+done
+
+if [ $JENKINS_NEW -eq 1 ]
+then
+  TASKS=''
+  echo "TASKS=$TASKS"
+  if [ "$RUN_UNIT_TESTS" == true ]
+  then
+    TASKS="${TASKS} test"
+  else
+    TASKS="${TASKS} -x test"
+  fi
+  echo "TASKS=$TASKS"
+  if [ "$RUN_INTEGRATION_TESTS" == true ]
+  then
+    TASKS="${TASKS} integrationTest"
+  else
+    TASKS="${TASKS} -x integrationTest"
+  fi
+  echo "TASKS=$TASKS"
+  if [ "$RUN_STATIC_CHECKS" == true ]
+  then
+    TASKS="${TASKS} check"
+  else
+    TASKS="${TASKS} -x check"
+  fi
+  echo "TASKS=$TASKS"
+  if [ "$RUN_COVERAGE" == true ]
+  then
+    TASKS="${TASKS} jacocoTestReport"
+  else
+    TASKS="${TASKS} -x jacocoTestReport"
+  fi
+  echo "TASKS=$TASKS"
+fi
+
+echo "Final TASKS=$TASKS"
+
+JAR_DIR=$PROJECT_ROOT/build/libs
+RPM_DIR=$PROJECT_ROOT/build/distributions
+REPO_URL=http://d5-d01-dev01.clarabridge.net:18081/content/repositories/releases
+YUM_REPO=clarabridge-analytics
+
+# Inject build metadata into global source constants prior to compilation
+VERSION=$(cat build.gradle | sed -rn "s/^\s*version\s*=\s*'(.+)'\s*$/\1/p")
+
+# Mock build metadata when outside Jenkins
+[ -z $GIT_COMMIT ] && GIT_COMMIT=$(git show -s --format=%H)
+[ -z $BUILD_NUMBER ] && BUILD_NUMBER=NA
+[ -z $BUILD_TAG ] && BUILD_TAG=NA
+
+GIT_DESC=$(git describe --tags)
+
+git checkout -- $PROJECT_ROOT/src/main/java/com/clarabridge/analytics/Constants.java
+
+# Replace actual constants values in Constants.java source
+for var in VERSION GIT_COMMIT GIT_DESC BUILD_NUMBER BUILD_TAG
+do
+  var_value=$(eval echo \$${var})
+  sed -i -r '/public static final String/s/ '${var}' *= *"[^"]*"/ '${var}' = "'${var_value}'"/' $PROJECT_ROOT/src/main/java/com/clarabridge/analytics/Constants.java
+  echo $var = $var_value
+done
+
+if [ "$JENKINS" == 1 ]
+then
+  # Write commiter ID fields to file for use by Jenkins EnvInject plugin
+  # This makes these variables available to Jenkins for injection into Slack alerts
+  cat <<EOF > $PROJECT_ROOT/env.properties
+GIT_COMMITTER_NAME=$(git --no-pager show -s --format='%an' $GIT_COMMIT)
+GIT_COMMITTER_EMAIL=$(git --no-pager show -s --format='%ae' $GIT_COMMIT)
+EOF
+  grep GIT_COMMITTER_NAME $PROJECT_ROOT/env.properties
+
+  echo "Setting proxy to $PROXY_HOST:$PROXY_PORT in $(pwd)/gradle.properties"
+  # Set up proxy info if running under Jenkins
+  cat <<-EOF > gradle.properties
+org.gradle.daemon=false
+systemProp.http.proxyHost=$PROXY_HOST
+systemProp.http.proxyPort=$PROXY_PORT
+systemProp.https.proxyHost=$PROXY_HOST
+systemProp.https.proxyPort=$PROXY_PORT
+EOF
+fi
+
+if [ $PUBLISH -eq 1 ]
+then
+    PACKAGE=clarabridge-analytics-server
+    repoUrl=$REPO_URL/$PACKAGE
+    echo "DELETE $repoUrl/$VERSION"
+    http_proxy='' && curl -s -XDELETE -u 'admin:admin123' $repoUrl/$VERSION >/dev/null
+fi
+
+RANDOMIZE_PORT=0
+# Use random port for integration tests
+for task in $TASKS
+do
+  [ "$task" == integrationTest ] && RANDOMIZE_PORT=1
+done
+
+if [ $RANDOMIZE_PORT -eq 1 ]
+then
+  read LOWERPORT UPPERPORT < /proc/sys/net/ipv4/ip_local_port_range
+  while :
+  do
+    PORT="$(shuf -i $LOWERPORT-$UPPERPORT -n 1)"
+    ss -lpn | grep -q ":$PORT " || break
+  done
+  export ANLYT_SERVER_PORT=$PORT
+  echo "Assigned port $PORT for integration tests"
+fi
+
+set -x
+./gradlew $TASKS 2>&1
+set +x
+
+if [ $PUBLISH -eq 1 ]
+then
+  rpmFile=$(ls $PROJECT_ROOT/build/distributions/*-$VERSION-*.rpm)
+  rpmUrl=$repoUrl/$VERSION/$(basename $rpmFile)
+  echo "Publishing RPM to Nexus repository: $rpmUrl"
+  curl -s -u 'admin:admin123' --upload-file $rpmFile $rpmUrl
+fi
