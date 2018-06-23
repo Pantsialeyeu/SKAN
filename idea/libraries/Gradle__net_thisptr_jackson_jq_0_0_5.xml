@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: net.thisptr:jackson-jq:0.0.5">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/net.thisptr/jackson-jq/0.0.5/44b73f894b66b093e1054067c7f837186ad127a5/jackson-jq-0.0.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/net.thisptr/jackson-jq/0.0.5/6452402c9142c04e905479acb58ce9a462b35f12/jackson-jq-0.0.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

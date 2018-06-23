@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="gradleEx_integrationTest" target="1.8" />
+      <module name="gradleEx_main" target="1.8" />
+      <module name="gradleEx_test" target="1.8" />
+      <module name="IdeaProjects-gradleEx_integrationTest" target="1.8" />
+      <module name="IdeaProjects-tkmi-bart-aqa-demo_integrationTest" target="1.8" />
+      <module name="IdeaProjects-tkmi-bart-aqa-demo_main" target="1.8" />
+      <module name="IdeaProjects-tkmi-bart-aqa-demo_test" target="1.8" />
+      <module name="scan-demo_integrationTest" target="1.8" />
+      <module name="scan-demo_main" target="1.8" />
+      <module name="scan-demo_test" target="1.8" />
+      <module name="scan_integrationTest" target="1.8" />
+      <module name="scan_main" target="1.8" />
+      <module name="scan_test" target="1.8" />
+      <module name="tkmi-bart-aqa-demo_acceptanceTest" target="1.8" />
+      <module name="tkmi-bart-aqa-demo_integrationTest" target="1.8" />
+      <module name="tkmi-bart-aqa-demo_main" target="1.8" />
+      <module name="tkmi-bart-aqa-demo_test" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
