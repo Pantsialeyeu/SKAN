@@ -3,19 +3,16 @@ package com.tkmi.test.unit.scanTest
 import groovy.json.JsonBuilder
 import spock.lang.Specification
 
-import java.sql.Time
-
 class ScanSensorTest extends Specification {
 	
 	def 'scanning management system demo test'(){
-		given: 'area'
+		given: 'scanning area:'
+		and: 'scanner initial position;'
+		and: 'scanner final position.'
 		def Xstart = 0
 		def Ystart = 0
 		def Xend = 10
 		def Yend = 10
-		and: 'initial position'
-		def x = 0
-		def y = 0
 		and: 'expected coverage'
 		def expectedCoverage = []
 		(Ystart..Yend).each{ y_pos ->
@@ -25,7 +22,7 @@ class ScanSensorTest extends Specification {
 			}
 		}
 		when: 'scan execution'
-		def result = scan(x, y, Xstart, Xend, Ystart, Yend)
+		def result = scan(Xstart, Xend, Ystart, Yend)
 		then: 'final position should match expected'
 		assert result.x == Xend
 		assert result.y == Yend + 1
@@ -39,9 +36,11 @@ class ScanSensorTest extends Specification {
 	
 	// Scanner
 	
-	def scan(x, y, Xstart, Xend, Ystart, Yend){
-		def coverage = []
-		def counter = 0
+	def scan(Xstart, Xend, Ystart, Yend){
+		def x = Xstart,
+				y = Ystart,
+				coverage = [],
+				counter = 0
 		while (!(y > Yend)) {
 			coverage.add('y' + y)
 			x = Xstart
